@@ -12,6 +12,13 @@ write:
 backend:
   replicas: 0
 
+# Disable caches - not needed for single node, Pi doesn't have RAM for it
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
 loki:
   auth_enabled: false
 
