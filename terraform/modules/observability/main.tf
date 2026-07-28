@@ -25,7 +25,7 @@ resource "helm_release" "prometheus_stack" {
 
   set {
     name  = "prometheus.prometheusSpec.scrapeInterval"
-    value = "30s"
+    value = "60s"
   }
 }
 
