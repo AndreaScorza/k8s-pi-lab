@@ -41,3 +41,20 @@ resource "helm_release" "loki" {
     file("${path.module}/loki-values.yaml")
   ]
 }
+
+resource "helm_release" "alloy" {
+  name       = "alloy"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "alloy"
+  version    = "1.11.0"
+  namespace  = kubernetes_namespace_v1.monitoring.metadata[0].name
+  timeout    = 600
+
+  values = [
+    file("${path.module}/alloy-values.yaml")
+  ]
+
+  depends_on = [
+    helm_release.loki
+  ]
+}
