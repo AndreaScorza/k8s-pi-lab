@@ -10,8 +10,11 @@ terraform {
     }
   }
 
-  backend "local" {
-    path = "terraform.tfstate"
+  cloud {
+    organization = "billy-the-pi-org"
+    workspaces {
+      name = "my-workspace"
+    }
   }
 }
 
