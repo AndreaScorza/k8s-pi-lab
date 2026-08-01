@@ -1,0 +1,37 @@
+- name: Bootstrap k3s on the Pi
+  hosts: pi
+  become: true
+
+  tasks:
+    - name: Install k3s
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Ensure /etc/rancher/k3s exists
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Disable the bundled Traefik ingress
+      # Nothing in this cluster uses Traefik as an ingress (no Ingress/IngressRoute
+      # resources), but its LoadBalancer service DNATs all host traffic on ports
+      # 80/443 to itself, breaking Caddy which also runs on this box.
+      copy:
+        dest: /etc/rancher/k3s/config.yaml
+        content: |
+          disable:
+            - traefik
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart k3s
+
+  handlers:
+    - name: Restart k3s
+      systemd:
+        name: k3s
+        state: restarted
