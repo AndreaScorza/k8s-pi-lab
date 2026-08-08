@@ -14,8 +14,8 @@ on.
    Nothing in this cluster uses Traefik (no `Ingress`/`IngressRoute`
    resources), but its `LoadBalancer` service DNATs *all* inbound traffic on
    host ports 80/443 to itself via iptables, which silently broke Caddy
-   (also running on this Pi, fronting `redacted.duckdns.org` /
-   `redacted.duckdns.org`) until it was disabled.
+   (also running on this Pi, fronting unrelated services) until it was
+   disabled.
 2. **`terraform/`** — manages in-cluster resources once a kubeconfig exists:
    Helm releases for observability (`kube-prometheus-stack`, `loki`,
    `alloy`).
