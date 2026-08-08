@@ -27,6 +27,20 @@ resource "helm_release" "prometheus_stack" {
     name  = "prometheus.prometheusSpec.scrapeInterval"
     value = "60s"
   }
+
+  values = [
+    file("${path.module}/alerting-values.yaml")
+  ]
+
+  set_sensitive {
+    name  = "alertmanager.config.receivers[1].telegram_configs[0].bot_token"
+    value = var.telegram_bot_token
+  }
+
+  set {
+    name  = "alertmanager.config.receivers[1].telegram_configs[0].chat_id"
+    value = var.telegram_chat_id
+  }
 }
 
 resource "helm_release" "loki" {
