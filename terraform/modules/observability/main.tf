@@ -20,7 +20,7 @@ resource "helm_release" "prometheus_stack" {
   # Tuned for Pi with 4 GB RAM
   set {
     name  = "prometheus.prometheusSpec.retention"
-    value = "7d"
+    value = "3d"
   }
 
   set {
