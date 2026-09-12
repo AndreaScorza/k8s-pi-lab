@@ -32,13 +32,41 @@ sudo-capable user:
 ansible-playbook -i ansible/inventory.ini ansible/k3s.yml
 ```
 
-### 2. Deploy cluster resources
+### 2. Authenticate to Terraform Cloud
+
+State is remote, so the CLI needs a user token before it can read or write it.
+Tokens live in `~/.terraform.d/credentials.tfrc.json` (one entry per host,
+mode `0600`) and are written there by:
+
+```bash
+terraform login
+```
+
+That opens `app.terraform.io/app/settings/tokens` in a browser; paste the
+generated token back at the prompt. For a non-interactive shell, export
+`TF_TOKEN_app_terraform_io` instead — it takes precedence over the file.
+
+Tokens expire. A stale one shows up as `HTTP 401` on every command that
+touches state, `terraform init` included; re-running `terraform login`
+replaces it.
+
+### 3. Deploy cluster resources
 
 ```bash
 cd terraform
 terraform init
+terraform plan
 terraform apply
 ```
+
+`terraform.tfvars` is loaded automatically, so no `-var-file` is needed.
+
+The workspace has to be in **Local** execution mode. The `helm` and
+`kubernetes` providers reach the apiserver over the LAN via `~/.kube/config`,
+so in Remote mode the run would execute on HashiCorp's infrastructure, which
+has neither that kubeconfig nor a route to the Pi — and `terraform.tfvars` is
+not uploaded to remote runs either, leaving the variables unset. Terraform
+Cloud is used for state storage only.
 
 ## Observability
 
@@ -71,5 +99,5 @@ flowchart LR
 Notes:
 - **Temperature** comes from `node_hwmon_temp_celsius`, exported by node-exporter reading `/sys/class/hwmon` on the host. Alerted on by `PiHighTemperature`/`PiCriticalTemperature` in [`modules/observability/alerting-values.yaml`](terraform/modules/observability/alerting-values.yaml).
 - **k3s false positives** (`KubeControllerManagerDown`, `KubeProxyDown`, `KubeSchedulerDown`, `Watchdog`) are routed to a `null` receiver — those components run embedded in the k3s binary rather than as separate scrapable pods, so Prometheus can never find them.
-- **Terraform state** is remote, not local — stored in Terraform Cloud (org `billy-the-pi-org`, workspace `my-workspace`), see the `cloud` block in [`terraform/providers.tf`](terraform/providers.tf).
+- **Terraform state** is remote, not local — stored in Terraform Cloud (org `billy-the-pi-org`, workspace `my-workspace`), see the `cloud` block in [`terraform/providers.tf`](terraform/providers.tf). Authentication is covered in [step 2](#2-authenticate-to-terraform-cloud).
 - **Secrets** (Grafana admin password, Telegram bot token/chat ID) live in `terraform/terraform.tfvars`, which is gitignored; variable declarations are in [`terraform/variables.tf`](terraform/variables.tf).
