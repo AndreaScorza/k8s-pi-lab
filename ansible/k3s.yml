@@ -30,8 +30,31 @@
         mode: "0644"
       notify: Restart k3s
 
+    - name: Start k3s and enable it at boot
+      systemd:
+        name: k3s
+        state: started
+        enabled: true
+      when: k3s_enabled | bool
+
+    - name: Stop k3s and disable it at boot
+      systemd:
+        name: k3s
+        state: stopped
+        enabled: false
+      when: not (k3s_enabled | bool)
+      register: k3s_stopped
+
+    - name: Kill pod containers left running by the stopped k3s
+      # Stopping the k3s unit deliberately leaves pod containers running (so
+      # k3s upgrades don't restart workloads); killall stops them. It deletes
+      # nothing on disk.
+      command: /usr/local/bin/k3s-killall.sh
+      when: k3s_stopped is changed
+
   handlers:
     - name: Restart k3s
       systemd:
         name: k3s
         state: restarted
+      when: k3s_enabled | bool

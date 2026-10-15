@@ -68,6 +68,31 @@ has neither that kubeconfig nor a route to the Pi — and `terraform.tfvars` is
 not uploaded to remote runs either, leaving the variables unset. Terraform
 Cloud is used for state storage only.
 
+### Pausing and resuming the cluster
+
+**Current state: paused** (since 2026-10-15, to free the Pi's resources).
+
+Whether k3s runs is controlled by `k3s_enabled` in
+[`ansible/inventory.ini`](ansible/inventory.ini). Set it and re-run the
+playbook:
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/k3s.yml
+```
+
+- `k3s_enabled=false` stops k3s, disables it at boot, and runs
+  `k3s-killall.sh` to stop the pod containers. `systemctl stop` alone leaves
+  them running by design, so k3s upgrades don't restart workloads.
+- `k3s_enabled=true` enables k3s and starts it. All pods come back as they
+  were within a few minutes; check with `kubectl get pods -A`.
+
+Pausing deletes nothing on disk: cluster state, the Loki volume and container
+images stay. Prometheus has no persistent volume, so its metrics history is
+lost when its pod stops (as on any restart) and refills after resuming;
+Grafana dashboards are provisioned from the chart and come back as they were. While paused, Terraform cannot
+reach the apiserver, so `terraform plan`/`apply` will fail until k3s is
+resumed. Resuming needs no Terraform run.
+
 ## Observability
 
 ```mermaid
