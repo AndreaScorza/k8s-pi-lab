@@ -18,6 +18,15 @@ alloy:
     limits:
       memory: 128Mi
 
+  livenessProbe:
+    httpGet:
+      path: /-/ready
+      port: 12345
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 6
+
   configMap:
     create: true
     content: |-
